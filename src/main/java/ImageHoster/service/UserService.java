@@ -2,6 +2,10 @@ package ImageHoster.service;
 
 import ImageHoster.model.User;
 import ImageHoster.repository.UserRepository;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +34,20 @@ public class UserService {
         } else {
             return null;
         }
+    }
+    
+    //Checks password for:
+    //At least 1 alphabet
+    //At least 1 digit
+    //At least 1 special char
+    public Boolean checkPassword(String password) {
+    	
+    	Pattern pattern = Pattern.compile("(?=.*\\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&*]).*"); 
+    	Matcher matcher = pattern.matcher(password);
+    	if(matcher.matches()){
+    		return true;
+    	}
+    	return false;
     }
 
 }
