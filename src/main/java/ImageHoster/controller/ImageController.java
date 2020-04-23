@@ -1,8 +1,10 @@
 package ImageHoster.controller;
 
+import ImageHoster.model.Comment;
 import ImageHoster.model.Image;
 import ImageHoster.model.Tag;
 import ImageHoster.model.User;
+import ImageHoster.service.CommentService;
 import ImageHoster.service.ImageService;
 import ImageHoster.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,9 @@ public class ImageController {
 
     @Autowired
     private TagService tagService;
+    
+    @Autowired
+    private CommentService commentService;
 
     //This method displays all the images in the user home page after successful login
     @RequestMapping("images")
@@ -47,9 +52,11 @@ public class ImageController {
     //this list is then sent to 'images/image.html' file and the tags are displayed
     @RequestMapping("/images/{id}")
     public String showImage(@PathVariable("id") Integer id, Model model) {
-        Image image = imageService.getImage(id);
+    	Image image = imageService.getImage(id);
         model.addAttribute("image", image);
         model.addAttribute("tags", image.getTags());
+        ArrayList<Comment> comments = (ArrayList<Comment>) commentService.getComments(image);
+        model.addAttribute("comments", comments);
         return "images/image";
     }
 
@@ -101,6 +108,8 @@ public class ImageController {
         	model.addAttribute("editError",editError);
             model.addAttribute("image", image);
             model.addAttribute("tags", image.getTags());
+            ArrayList<Comment> comments = (ArrayList<Comment>) commentService.getComments(image);
+            model.addAttribute("comments", comments);
         	return "images/image";
         }else {
         	String tags = convertTagsToString(image.getTags());
@@ -160,6 +169,8 @@ public class ImageController {
     		model.addAttribute("deleteError",deleteError);
     		model.addAttribute("image", image);
             model.addAttribute("tags", image.getTags());
+            ArrayList<Comment> comments = (ArrayList<Comment>) commentService.getComments(image);
+            model.addAttribute("comments", comments);
         	return "images/image";
     	}
     }
@@ -205,5 +216,27 @@ public class ImageController {
         tagString.append(lastTag.getName());
 
         return tagString.toString();
+    }
+    
+  //This method is called to create comment
+    //The logic is to set comments to datbase
+    //Get the 'comment' request parameter using @RequestParam annotation which is just a string of all the comments
+    @RequestMapping(value = "/image/{imageId}/comments", method = RequestMethod.POST)
+    public String createComment(@RequestParam("comment") String text, @PathVariable("imageId") Integer id,Model model,HttpSession session) throws IOException {
+
+        User user = (User) session.getAttribute("loggeduser");
+        Image image = imageService.getImage(id);
+        Comment comment = new Comment();
+        comment.setImage(image);
+        comment.setUser(user);
+        comment.setText(text);
+        comment.setDate(new Date());
+        commentService.createComment(comment);
+        ArrayList<Comment> comments = (ArrayList<Comment>) commentService.getComments(image);
+        model.addAttribute("image", image);
+        model.addAttribute("tags", image.getTags());
+        model.addAttribute("comments", comments);
+        
+        return "images/image";
     }
 }
